@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${'File Ownership Claim - ' + item.itemName}">Claim Found Item</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main class="main-content">
+
+    <div class="form-card" style="max-width: 680px;">
+        <div class="form-header">
+            <span class="badge badge-found" style="margin-bottom: 0.5rem;">Ownership Verification</span>
+            <h2>File Ownership Claim</h2>
+            <p>Provide evidence demonstrating that you are the genuine owner of this found property.</p>
+        </div>
+
+        <div th:if="${errorMessage}" class="alert alert-danger">
+            <span th:text="${errorMessage}">Error message</span>
+        </div>
+
+        <!-- Target Item Summary -->
+        <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+            <div style="font-size: 0.8rem; color: #64748b; text-transform: uppercase; font-weight: 700; margin-bottom: 0.25rem;">
+                Target Found Item
+            </div>
+            <h3 style="font-size: 1.25rem; color: #0f172a; margin-bottom: 0.25rem;" th:text="${item.itemName}">Item Title</h3>
+            <div style="font-size: 0.875rem; color: #475569; display: flex; flex-wrap: wrap; gap: 1rem;">
+                <span>Category: <strong th:text="${item.category}">Category</strong></span>
+                <span>Found at: <strong th:text="${item.location}">Location</strong></span>
+                <span>Date: <strong th:text="${#temporals.format(item.itemDate, 'dd MMM yyyy')}">Date</strong></span>
+            </div>
+        </div>
+
+        <form th:action="@{/items/{id}/claim(id=${item.id})}" th:object="${claimDto}" method="post">
+
+            <!-- Ownership Explanation -->
+            <div class="form-group">
+                <label class="form-label" for="explanation">Detailed Ownership Explanation *</label>
+                <textarea id="explanation" th:field="*{explanation}" class="form-control" rows="4"
+                          placeholder="Explain how, when, and where you misplaced this belonging, and why it belongs to you." required></textarea>
+                <div class="form-text">Be thorough. Administrators use this to evaluate the authenticity of your claim.</div>
+                <div class="form-error" th:if="${#fields.hasErrors('explanation')}" th:errors="*{explanation}"></div>
+            </div>
+
+            <!-- Evidence Type -->
+            <div class="form-group">
+                <label class="form-label" for="evidenceType">Primary Evidence Type *</label>
+                <select id="evidenceType" th:field="*{evidenceType}" class="form-control" required>
+                    <option value="IDENTIFYING_MARKS">Distinctive Marks / Scratches / Stickers / Engravings</option>
+                    <option value="SERIAL_NUMBER">Serial Number / IMEI / Device ID / Passcode Details</option>
+                    <option value="PURCHASE_RECEIPT">Purchase Invoice / Warranty / Store Receipt Proof</option>
+                    <option value="CONTENTS_DESCRIPTION">Detailed Unadvertised Contents Description</option>
+                    <option value="OTHER_PROOF">Other Documented Evidence</option>
+                </select>
+                <div class="form-error" th:if="${#fields.hasErrors('evidenceType')}" th:errors="*{evidenceType}"></div>
+            </div>
+
+            <!-- Evidence Details -->
+            <div class="form-group">
+                <label class="form-label" for="evidenceDetails">Specific Evidence Details *</label>
+                <textarea id="evidenceDetails" th:field="*{evidenceDetails}" class="form-control" rows="4"
+                          placeholder="Describe the hidden features or markings: e.g., 'Serial number ends in 8942', 'Initials P.K. inside the lid', 'Yellow sticky note inside page 42'." required></textarea>
+                <div class="form-text">
+                    &#128274; This evidence will be cross-checked by campus administrators against the confidential clues entered by the finder.
+                </div>
+                <div class="form-error" th:if="${#fields.hasErrors('evidenceDetails')}" th:errors="*{evidenceDetails}"></div>
+            </div>
+
+            <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 0.85rem; margin: 1.25rem 0; font-size: 0.825rem; color: #166534;">
+                &#9989; <strong>Anti-Fraud Protection:</strong> Claims are logged under your university account. Submitting false claims is a violation of the campus honor code.
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                <button type="submit" class="btn btn-primary btn-block btn-lg">
+                    Submit Ownership Claim
+                </button>
+                <a th:href="@{/items/{id}(id=${item.id})}" class="btn btn-outline" style="min-width: 120px;">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browse Catalog - Campus Lost &amp; Found</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main class="main-content">
+
+    <div style="margin-bottom: 1.75rem;">
+        <h1 style="font-size: 1.85rem; margin-bottom: 0.35rem;">Campus Item Registry</h1>
+        <p style="color: #64748b;">Browse and search through reported lost belongings and found campus property.</p>
+    </div>
+
+    <!-- Search & Filters Bar -->
+    <div class="filter-bar">
+        <form th:action="@{/items}" method="get" class="filter-form">
+            <!-- Keyword Search -->
+            <div>
+                <label class="form-label" for="keyword">Search Keywords</label>
+                <input type="text" id="keyword" name="keyword" th:value="${keyword}" class="form-control" placeholder="Search by name, color, or location...">
+            </div>
+
+            <!-- Report Type Filter -->
+            <div>
+                <label class="form-label" for="type">Report Type</label>
+                <select id="type" name="type" class="form-control">
+                    <option value="">All Types</option>
+                    <option value="LOST" th:selected="${selectedType != null and selectedType.name() == 'LOST'}">Lost Items</option>
+                    <option value="FOUND" th:selected="${selectedType != null and selectedType.name() == 'FOUND'}">Found Items</option>
+                </select>
+            </div>
+
+            <!-- Category Filter -->
+            <div>
+                <label class="form-label" for="category">Category</label>
+                <select id="category" name="category" class="form-control">
+                    <option value="">All Categories</option>
+                    <option th:each="cat : ${categories}" th:value="${cat}" th:text="${cat}"
+                            th:selected="${selectedCategory != null and selectedCategory == cat}">Category</option>
+                </select>
+            </div>
+
+            <!-- Status Filter -->
+            <div>
+                <label class="form-label" for="status">Status</label>
+                <select id="status" name="status" class="form-control">
+                    <option value="">All Statuses</option>
+                    <option value="OPEN" th:selected="${selectedStatus != null and selectedStatus.name() == 'OPEN'}">Open</option>
+                    <option value="CLAIM_PENDING" th:selected="${selectedStatus != null and selectedStatus.name() == 'CLAIM_PENDING'}">Claim Pending</option>
+                    <option value="RETURNED" th:selected="${selectedStatus != null and selectedStatus.name() == 'RETURNED'}">Returned</option>
+                </select>
+            </div>
+
+            <!-- Buttons -->
+            <div style="display: flex; gap: 0.5rem;">
+                <button type="submit" class="btn btn-primary">Filter</button>
+                <a th:href="@{/items}" class="btn btn-outline" title="Reset Filters">Reset</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Empty State -->
+    <div th:if="${#lists.isEmpty(items)}" class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <h3>No items match your search</h3>
+        <p>Try adjusting your search keywords, clear category filters, or file a new lost/found report.</p>
+        <div style="display: flex; justify-content: center; gap: 1rem;">
+            <a th:href="@{/items}" class="btn btn-outline">Clear Filters</a>
+            <a th:href="@{/report(type='LOST')}" class="btn btn-primary">Report a Lost Item</a>
+        </div>
+    </div>
+
+    <!-- Items Grid -->
+    <div th:unless="${#lists.isEmpty(items)}" class="cards-grid">
+        <div th:each="item : ${items}" class="item-card">
+            <div>
+                <div class="card-header-row">
+                    <span th:if="${item.type.name() == 'LOST'}" class="badge badge-lost">Lost</span>
+                    <span th:if="${item.type.name() == 'FOUND'}" class="badge badge-found">Found</span>
+
+                    <span th:if="${item.status.name() == 'OPEN'}" class="badge badge-open">Open</span>
+                    <span th:if="${item.status.name() == 'CLAIM_PENDING'}" class="badge badge-pending">Claim Pending</span>
+                    <span th:if="${item.status.name() == 'RETURNED'}" class="badge badge-returned">Returned</span>
+                </div>
+
+                <h3 class="card-title" th:text="${item.itemName}">Item Name</h3>
+
+                <div class="card-meta">
+                    <span>&#128193; Category: <strong th:text="${item.category}">Category</strong></span>
+                    <span>&#128205; Location: <span th:text="${item.location}">Location</span></span>
+                    <span>&#128197; Date: <span th:text="${#temporals.format(item.itemDate, 'dd MMM yyyy')}">Date</span></span>
+                </div>
+
+                <p class="card-desc" th:text="${item.description != null ? item.description : 'No additional public description provided.'}">
+                    Description
+                </p>
+            </div>
+
+            <div class="card-footer-row">
+                <span th:if="${item.color != null and !item.color.isEmpty()}" style="font-size: 0.8rem; color: #64748b;">
+                    Color: <span th:text="${item.color}">Color</span>
+                </span>
+                <a th:href="@{/items/{id}(id=${item.id})}" class="btn btn-navy btn-sm">
+                    View &amp; Verify &rarr;
+                </a>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<nav class="navbar" th:fragment="navbar">
+    <div class="nav-container">
+        <a class="nav-brand" th:href="@{/}">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                <path d="M11 8v6M8 11h6"></path>
+            </svg>
+            <span>Campus Lost &amp; Found</span>
+        </a>
+
+        <div class="nav-menu">
+            <a class="nav-link" th:href="@{/}">Home</a>
+            <a class="nav-link" th:href="@{/items}">Browse Items</a>
+            <a class="nav-link" th:href="@{/report(type='LOST')}">Report Lost</a>
+            <a class="nav-link" th:href="@{/report(type='FOUND')}">Report Found</a>
+            <a class="nav-link" th:href="@{/my-claims}" sec:authorize="isAuthenticated()">My Claims</a>
+            <a class="nav-link" th:href="@{/admin/dashboard}" sec:authorize="hasRole('ADMIN')" style="color: #38bdf8; font-weight: 600;">Admin Dashboard</a>
+        </div>
+
+        <div class="nav-auth">
+            <div sec:authorize="isAuthenticated()" style="display: flex; align-items: center; gap: 0.75rem;">
+                <span class="user-badge">
+                    <span sec:authentication="name">User</span>
+                    <span class="role-tag" sec:authorize="hasRole('ADMIN')">Admin</span>
+                </span>
+                <form th:action="@{/logout}" method="post" style="display: inline;">
+                    <button type="submit" class="btn btn-outline-white btn-sm">Sign Out</button>
+                </form>
+            </div>
+
+            <div sec:authorize="isAnonymous()" style="display: flex; gap: 0.5rem;">
+                <a th:href="@{/login}" class="btn btn-outline-white btn-sm">Sign In</a>
+                <a th:href="@{/register}" class="btn btn-primary btn-sm">Register</a>
+            </div>
+        </div>
+    </div>
+</nav>
+</body>
+</html>

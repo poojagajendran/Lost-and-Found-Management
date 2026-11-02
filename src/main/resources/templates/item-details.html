@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${item.itemName + ' - Item Details'}">Item Details - Campus Lost &amp; Found</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main class="main-content">
+
+    <!-- Flash message -->
+    <div th:if="${successMessage}" class="alert alert-success">
+        <span th:text="${successMessage}">Success</span>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger">
+        <span th:text="${errorMessage}">Error</span>
+    </div>
+
+    <div style="max-width: 800px; margin: 0 auto;">
+
+        <div style="margin-bottom: 1rem;">
+            <a th:href="@{/items}" style="font-size: 0.9rem; color: #64748b; font-weight: 500;">
+                &larr; Back to Catalog Registry
+            </a>
+        </div>
+
+        <div style="background-color: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 2rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+
+            <!-- Header Row -->
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1.25rem;">
+                <div>
+                    <div style="display: flex; gap: 0.5rem; margin-bottom: 0.6rem;">
+                        <span th:if="${item.type.name() == 'LOST'}" class="badge badge-lost">Lost Report</span>
+                        <span th:if="${item.type.name() == 'FOUND'}" class="badge badge-found">Found Report</span>
+
+                        <span th:if="${item.status.name() == 'OPEN'}" class="badge badge-open">Open</span>
+                        <span th:if="${item.status.name() == 'CLAIM_PENDING'}" class="badge badge-pending">Claim Pending</span>
+                        <span th:if="${item.status.name() == 'RETURNED'}" class="badge badge-returned">Returned to Owner</span>
+                    </div>
+                    <h1 style="font-size: 2rem; color: #0f172a;" th:text="${item.itemName}">Item Name</h1>
+                </div>
+
+                <div style="text-align: right; font-size: 0.85rem; color: #64748b;">
+                    <div>Reported On</div>
+                    <strong style="color: #1e293b;" th:text="${#temporals.format(item.createdAt, 'dd MMM yyyy, HH:mm')}">Date</strong>
+                </div>
+            </div>
+
+            <!-- Detail Grid Table -->
+            <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.25rem; margin-bottom: 1.5rem;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <div>
+                        <span style="font-size: 0.8rem; color: #64748b; display: block;">Category</span>
+                        <strong style="color: #0f172a;" th:text="${item.category}">Electronics</strong>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.8rem; color: #64748b; display: block;">Primary Colour</span>
+                        <strong style="color: #0f172a;" th:text="${item.color != null and !item.color.isEmpty() ? item.color : 'Unspecified'}">Black</strong>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.8rem; color: #64748b; display: block;">Campus Location</span>
+                        <strong style="color: #0f172a;" th:text="${item.location}">Library</strong>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.8rem; color: #64748b; display: block;">Incident Date</span>
+                        <strong style="color: #0f172a;" th:text="${#temporals.format(item.itemDate, 'dd MMMM yyyy')}">Date</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Public Description -->
+            <div style="margin-bottom: 1.75rem;">
+                <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem; color: #1e293b;">Public Description</h3>
+                <p style="color: #334155; line-height: 1.6; background-color: #ffffff; padding: 1rem; border: 1px solid #e2e8f0; border-radius: 6px;"
+                   th:text="${item.description != null and !item.description.isEmpty() ? item.description : 'No detailed public description was submitted for this report.'}">
+                    Description
+                </p>
+            </div>
+
+            <!-- Security Notice regarding Private Clues -->
+            <div th:if="${item.type.name() == 'FOUND'}" style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 1rem; margin-bottom: 1.75rem; display: flex; align-items: flex-start; gap: 0.75rem;">
+                <div style="font-size: 1.25rem;">&#128737;</div>
+                <div style="font-size: 0.875rem; color: #1e40af;">
+                    <strong>Protected Ownership Verification Active:</strong>
+                    The person who turned in this item may have provided confidential identifying clues. To prevent fraud, private clues are shielded and are never revealed to the public or claimants. Only authorized campus staff cross-verify your evidence against these clues.
+                </div>
+            </div>
+
+            <!-- Action Section for FOUND items -->
+            <div th:if="${item.type.name() == 'FOUND'}" style="border-top: 1px solid #e2e8f0; padding-top: 1.5rem;">
+
+                <!-- Status == RETURNED -->
+                <div th:if="${item.status.name() == 'RETURNED'}" class="alert alert-info" style="margin-bottom: 0;">
+                    &#9989; This item has already been successfully verified and returned to its rightful owner.
+                </div>
+
+                <!-- User is Reporter -->
+                <div th:if="${item.status.name() != 'RETURNED' and isReporter}" class="alert alert-warning" style="margin-bottom: 0;">
+                    &#128100; You reported finding this item. You cannot file an ownership claim for an item you turned in.
+                </div>
+
+                <!-- User already claimed -->
+                <div th:if="${item.status.name() != 'RETURNED' and !isReporter and hasActiveClaim}" class="alert alert-info" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0;">
+                    <div>
+                        &#9989; You have an active ownership claim pending verification for this item.
+                    </div>
+                    <a th:href="@{/my-claims}" class="btn btn-navy btn-sm">Track in My Claims</a>
+                </div>
+
+                <!-- Eligible to Claim -->
+                <div th:if="${item.status.name() != 'RETURNED' and !isReporter and !hasActiveClaim}">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: gap; gap: 1rem;">
+                        <div>
+                            <h4 style="color: #0f172a; margin-bottom: 0.25rem;">Is this your lost belonging?</h4>
+                            <p style="font-size: 0.875rem; color: #64748b;">
+                                Click below to submit an ownership claim with your identifying proof.
+                            </p>
+                        </div>
+                        <div sec:authorize="isAuthenticated()">
+                            <a th:href="@{/items/{id}/claim(id=${item.id})}" class="btn btn-primary btn-lg">
+                                &#128221; Claim This Item
+                            </a>
+                        </div>
+                        <div sec:authorize="isAnonymous()">
+                            <a th:href="@{/login}" class="btn btn-primary btn-lg">
+                                Sign In to Claim Item
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Notice for LOST items -->
+            <div th:if="${item.type.name() == 'LOST'}" style="border-top: 1px solid #e2e8f0; padding-top: 1.5rem;">
+                <div th:if="${item.status.name() == 'RETURNED'}" class="alert alert-success" style="margin-bottom: 0;">
+                    &#9989; This lost item report is marked as resolved and returned to its owner.
+                </div>
+                <div th:if="${item.status.name() != 'RETURNED'}" style="display: flex; justify-content: space-between; align-items: center;">
+                    <p style="font-size: 0.9rem; color: #475569; margin: 0;">
+                        Did you find this item on campus?
+                    </p>
+                    <a th:href="@{/report(type='FOUND')}" class="btn btn-success">
+                        Report as Found
+                    </a>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

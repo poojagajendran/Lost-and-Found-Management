@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${'Adjudicate Claim #' + claim.id + ' - Admin Console'}">Review Claim - Admin Console</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main class="main-content">
+
+    <!-- Flash message -->
+    <div th:if="${errorMessage}" class="alert alert-danger">
+        <span th:text="${errorMessage}">Error</span>
+    </div>
+
+    <div style="margin-bottom: 1.5rem;">
+        <a th:href="@{/admin/dashboard}" style="font-size: 0.9rem; color: #64748b; font-weight: 500;">
+            &larr; Back to Admin Queue
+        </a>
+    </div>
+
+    <!-- Header -->
+    <div style="background-color: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.75rem; margin-bottom: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <span class="role-tag" style="margin-bottom: 0.5rem; display: inline-block;">Confidential Adjudication</span>
+                <h1 style="font-size: 1.85rem; color: #0f172a;">
+                    Verify Claim #<span th:text="${claim.id}">1</span>
+                </h1>
+                <p style="color: #64748b; font-size: 0.95rem;">
+                    Target Item: <strong th:text="${item.itemName}">Item Name</strong> &bull;
+                    Claimant: <strong th:text="${claim.claimant.name}">Claimant Name</strong>
+                </p>
+            </div>
+
+            <div>
+                <span th:if="${claim.status.name() == 'PENDING'}" class="badge badge-pending" style="font-size: 0.9rem; padding: 0.4rem 1rem;">
+                    Pending Verification
+                </span>
+                <span th:if="${claim.status.name() == 'APPROVED'}" class="badge badge-approved" style="font-size: 0.9rem; padding: 0.4rem 1rem;">
+                    Claim Approved
+                </span>
+                <span th:if="${claim.status.name() == 'REJECTED'}" class="badge badge-rejected" style="font-size: 0.9rem; padding: 0.4rem 1rem;">
+                    Claim Rejected
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Side-by-Side Comparison Workspace -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2.5rem;">
+
+        <!-- LEFT COLUMN: Found Item & Private Clues (Finder Data) -->
+        <div style="background-color: white; border: 1px solid #cbd5e1; border-radius: 10px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid #e2e8f0;">
+                <span style="font-size: 1.25rem;">&#128230;</span>
+                <h2 style="font-size: 1.2rem; color: #0f172a;">1. Found Property Record</h2>
+            </div>
+
+            <div style="margin-bottom: 1.25rem; font-size: 0.9rem;">
+                <div style="margin-bottom: 0.35rem;">Item Title: <strong th:text="${item.itemName}">Item Title</strong></div>
+                <div style="margin-bottom: 0.35rem;">Category: <strong th:text="${item.category}">Category</strong></div>
+                <div style="margin-bottom: 0.35rem;">Colour: <strong th:text="${item.color}">Color</strong></div>
+                <div style="margin-bottom: 0.35rem;">Found Location: <strong th:text="${item.location}">Location</strong></div>
+                <div style="margin-bottom: 0.35rem;">Date Found: <strong th:text="${#temporals.format(item.itemDate, 'dd MMM yyyy')}">Date</strong></div>
+                <div style="margin-bottom: 0.35rem;">Turned In By: <span th:text="${item.reporter.name}">Finder</span> (<code><span th:text="${item.reporter.email}">email</span></code>)</div>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; display: block; margin-bottom: 0.25rem;">
+                    Public Description
+                </label>
+                <div style="background-color: #f8fafc; padding: 0.75rem; border-radius: 6px; font-size: 0.875rem; color: #334155;"
+                     th:text="${item.description != null ? item.description : 'No public description.'}">
+                    Description
+                </div>
+            </div>
+
+            <!-- CONFIDENTIAL PRIVATE CLUES SECTION -->
+            <div style="background-color: #fefce8; border: 2px solid #facc15; border-radius: 8px; padding: 1.25rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <span style="font-size: 1.15rem;">&#128274;</span>
+                    <h3 style="font-size: 1rem; color: #854d0e; text-transform: uppercase; letter-spacing: 0.05em; margin: 0;">
+                        Confidential Private Clues
+                    </h3>
+                </div>
+                <p style="font-size: 0.8rem; color: #a16207; margin-bottom: 0.75rem;">
+                    Entered by finder when turned in. Strictly shielded from claimants and public views.
+                </p>
+
+                <div th:if="${#lists.isEmpty(privateClues)}" style="font-size: 0.875rem; color: #713f12; font-style: italic;">
+                    No private distinguishing clues were registered for this item by the finder.
+                </div>
+
+                <div th:unless="${#lists.isEmpty(privateClues)}">
+                    <div th:each="clue, iter : ${privateClues}" style="background-color: white; border: 1px solid #fef08a; padding: 0.75rem; border-radius: 6px; margin-bottom: 0.5rem;">
+                        <span style="font-size: 0.75rem; font-weight: 700; color: #854d0e;">Clue #<span th:text="${iter.count}">1</span>:</span>
+                        <p style="margin: 0.25rem 0 0; color: #713f12; font-weight: 600; font-size: 0.925rem;" th:text="${clue.clueDescription}">
+                            Clue description
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: Claimant Ownership Evidence -->
+        <div style="background-color: white; border: 1px solid #cbd5e1; border-radius: 10px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid #e2e8f0;">
+                <span style="font-size: 1.25rem;">&#128100;</span>
+                <h2 style="font-size: 1.2rem; color: #0f172a;">2. Claimant Evidence Submission</h2>
+            </div>
+
+            <div style="margin-bottom: 1.25rem; font-size: 0.9rem;">
+                <div style="margin-bottom: 0.35rem;">Claimant Name: <strong th:text="${claim.claimant.name}">Claimant Name</strong></div>
+                <div style="margin-bottom: 0.35rem;">Claimant Email: <code><span th:text="${claim.claimant.email}">claimant@college.edu</span></code></div>
+                <div style="margin-bottom: 0.35rem;">Submission Date: <strong th:text="${#temporals.format(claim.createdAt, 'dd MMM yyyy, HH:mm')}">Date</strong></div>
+            </div>
+
+            <!-- Ownership Explanation -->
+            <div style="margin-bottom: 1.5rem;">
+                <label style="font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; display: block; margin-bottom: 0.25rem;">
+                    Claimant's Loss Explanation
+                </label>
+                <div style="background-color: #f8fafc; padding: 0.85rem; border-radius: 6px; font-size: 0.9rem; color: #1e293b; line-height: 1.5; border: 1px solid #e2e8f0;"
+                     th:text="${claim.explanation}">
+                    Claimant's explanation
+                </div>
+            </div>
+
+            <!-- Submitted Proof / Evidences -->
+            <div style="background-color: #f0fdf4; border: 2px solid #86efac; border-radius: 8px; padding: 1.25rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <span style="font-size: 1.15rem;">&#128220;</span>
+                    <h3 style="font-size: 1rem; color: #166534; text-transform: uppercase; letter-spacing: 0.05em; margin: 0;">
+                        Submitted Verification Evidence
+                    </h3>
+                </div>
+                <p style="font-size: 0.8rem; color: #15803d; margin-bottom: 0.75rem;">
+                    Compare this evidence against the confidential private clues on the left.
+                </p>
+
+                <div th:if="${#lists.isEmpty(claim.evidences)}" style="font-size: 0.875rem; color: #166534; font-style: italic;">
+                    No additional itemized evidence attached.
+                </div>
+
+                <div th:unless="${#lists.isEmpty(claim.evidences)}">
+                    <div th:each="ev : ${claim.evidences}" style="background-color: white; border: 1px solid #bbf7d0; padding: 0.85rem; border-radius: 6px; margin-bottom: 0.5rem;">
+                        <span class="badge" style="background-color: #dcfce7; color: #15803d; font-size: 0.75rem; margin-bottom: 0.35rem;" th:text="${ev.evidenceType}">
+                            EVIDENCE TYPE
+                        </span>
+                        <p style="margin: 0.35rem 0 0; color: #1e293b; font-weight: 500; font-size: 0.925rem;" th:text="${ev.evidenceDetails}">
+                            Evidence details
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Adjudication Action Box -->
+    <div style="background-color: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 2rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+        <h2 style="font-size: 1.35rem; color: #0f172a; margin-bottom: 0.5rem;">Administrator Adjudication Decision</h2>
+        <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 1.5rem;">
+            Record your verification findings. Approving will mark the property as RETURNED to the claimant and reject conflicting pending claims.
+        </p>
+
+        <!-- If already reviewed -->
+        <div th:if="${claim.status.name() != 'PENDING'}" class="alert"
+             th:classappend="${claim.status.name() == 'APPROVED' ? 'alert-success' : 'alert-danger'}">
+            <strong>Claim Status: </strong> <span th:text="${claim.status}">STATUS</span> &bull;
+            Reviewed on <span th:text="${#temporals.format(claim.reviewedAt, 'dd MMM yyyy, HH:mm')}">Date</span> by
+            <strong th:text="${claim.reviewedBy != null ? claim.reviewedBy.name : 'Administrator'}">Admin</strong>
+            <div style="margin-top: 0.5rem;">
+                <strong>Decision Reason Recorded: </strong>
+                <span th:text="${claim.decisionReason}">Reason</span>
+            </div>
+        </div>
+
+        <!-- Form for Pending Claims -->
+        <div th:if="${claim.status.name() == 'PENDING'}">
+            <form id="adjudicationForm" th:object="${decisionDto}" method="post">
+                <div class="form-group">
+                    <label class="form-label" for="decisionReason">
+                        Adjudication Notes &amp; Verification Findings *
+                    </label>
+                    <textarea id="decisionReason" th:field="*{decisionReason}" class="form-control" rows="3"
+                              placeholder="e.g., 'Claimant's description of the engraving matches the confidential clue perfectly.' or 'Serial number submitted did not match device.'" required></textarea>
+                    <div class="form-text">These notes will be recorded in the audit log and visible to the claimant.</div>
+                    <div class="form-error" th:if="${#fields.hasErrors('decisionReason')}" th:errors="*{decisionReason}"></div>
+                </div>
+
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1.5rem;">
+                    <!-- Approve Button -->
+                    <button type="submit"
+                            th:formaction="@{/admin/claims/{id}/approve(id=${claim.id})}"
+                            class="btn btn-success btn-lg"
+                            onclick="return confirm('Are you sure you want to APPROVE this claim? The item will be marked as RETURNED to this owner.');">
+                        &#9989; Approve Ownership &amp; Mark Returned
+                    </button>
+
+                    <!-- Reject Button -->
+                    <button type="submit"
+                            th:formaction="@{/admin/claims/{id}/reject(id=${claim.id})}"
+                            class="btn btn-danger btn-lg"
+                            onclick="return confirm('Are you sure you want to REJECT this claim?');">
+                        &#10060; Reject Ownership Claim
+                    </button>
+
+                    <a th:href="@{/admin/dashboard}" class="btn btn-outline btn-lg" style="margin-left: auto;">
+                        Cancel &amp; Return to Dashboard
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus Lost &amp; Found - Secure Ownership Verification</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main class="main-content">
+
+    <!-- Flash Messages -->
+    <div th:if="${successMessage}" class="alert alert-success">
+        <span th:text="${successMessage}">Success message</span>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger">
+        <span th:text="${errorMessage}">Error message</span>
+    </div>
+
+    <!-- Hero Banner -->
+    <section class="hero">
+        <div class="hero-content">
+            <span class="hero-pill">Official Campus Property Portal</span>
+            <h1>Lost Something on Campus? Found Belongings?</h1>
+            <p>
+                A secure, centralized platform to report misplaced property, search found catalogs, and submit evidence-based ownership claims protected by private identifying clues.
+            </p>
+            <div class="hero-actions">
+                <a th:href="@{/report(type='LOST')}" class="btn btn-primary btn-lg">Report Lost Item</a>
+                <a th:href="@{/report(type='FOUND')}" class="btn btn-success btn-lg">Report Found Item</a>
+                <a th:href="@{/items}" class="btn btn-outline-white btn-lg">Browse Catalog</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Key Metrics & Statistics -->
+    <section class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon lost">&#128269;</div>
+            <div class="stat-info">
+                <h3 th:text="${totalLost}">0</h3>
+                <p>Lost Items Reported</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon found">&#128230;</div>
+            <div class="stat-info">
+                <h3 th:text="${totalFound}">0</h3>
+                <p>Found Items Turned In</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon returned">&#9989;</div>
+            <div class="stat-info">
+                <h3 th:text="${totalReturned}">0</h3>
+                <p>Items Returned to Owners</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Workflow Feature Explanation -->
+    <section style="margin-bottom: 3rem;">
+        <h2 style="font-size: 1.45rem; margin-bottom: 1.25rem; color: #0f172a;">How Our Secure Verification System Works</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+            <div style="background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.5rem;">
+                <div style="font-size: 1.5rem; margin-bottom: 0.75rem;">1&#65039;&#8419; Report with Hidden Clues</div>
+                <h4 style="margin-bottom: 0.5rem; color: #1e293b;">Protected Reporting</h4>
+                <p style="color: #64748b; font-size: 0.9rem;">
+                    When reporting a found item, finders register private distinguishing clues (e.g., hidden marks, engravings, or wallpaper details) that are strictly shielded from public view.
+                </p>
+            </div>
+            <div style="background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.5rem;">
+                <div style="font-size: 1.5rem; margin-bottom: 0.75rem;">2&#65039;&#8419; Evidence-Based Claims</div>
+                <h4 style="margin-bottom: 0.5rem; color: #1e293b;">Submit Ownership Proof</h4>
+                <p style="color: #64748b; font-size: 0.9rem;">
+                    True owners claim found items by submitting detailed verification evidence (serial numbers, receipts, or description of secret markings) through authenticated accounts.
+                </p>
+            </div>
+            <div style="background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.5rem;">
+                <div style="font-size: 1.5rem; margin-bottom: 0.75rem;">3&#65039;&#8419; Admin Verification</div>
+                <h4 style="margin-bottom: 0.5rem; color: #1e293b;">Verified Return</h4>
+                <p style="color: #64748b; font-size: 0.9rem;">
+                    Campus administrators inspect the evidence side-by-side with private clues on a secure review console, ensuring fraudulent claims are rejected and items return safely.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Recent Items Section -->
+    <section>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h2 style="font-size: 1.45rem; color: #0f172a;">Recently Reported Items</h2>
+            <a th:href="@{/items}" class="btn btn-outline btn-sm">View All Items &rarr;</a>
+        </div>
+
+        <div th:if="${#lists.isEmpty(recentItems)}" class="empty-state">
+            <h3>No reports registered yet</h3>
+            <p>Be the first to report a lost or found item to help fellow campus members.</p>
+            <a th:href="@{/report(type='LOST')}" class="btn btn-primary">Report an Item</a>
+        </div>
+
+        <div th:unless="${#lists.isEmpty(recentItems)}" class="cards-grid">
+            <div th:each="item : ${recentItems}" class="item-card">
+                <div>
+                    <div class="card-header-row">
+                        <span th:if="${item.type.name() == 'LOST'}" class="badge badge-lost">Lost</span>
+                        <span th:if="${item.type.name() == 'FOUND'}" class="badge badge-found">Found</span>
+
+                        <span th:if="${item.status.name() == 'OPEN'}" class="badge badge-open">Open</span>
+                        <span th:if="${item.status.name() == 'CLAIM_PENDING'}" class="badge badge-pending">Claim Pending</span>
+                        <span th:if="${item.status.name() == 'RETURNED'}" class="badge badge-returned">Returned</span>
+                    </div>
+
+                    <h3 class="card-title" th:text="${item.itemName}">Item Name</h3>
+
+                    <div class="card-meta">
+                        <span>&#128193; Category: <strong th:text="${item.category}">Category</strong></span>
+                        <span>&#128205; Location: <span th:text="${item.location}">Location</span></span>
+                        <span>&#128197; Date: <span th:text="${#temporals.format(item.itemDate, 'dd MMM yyyy')}">Date</span></span>
+                    </div>
+
+                    <p class="card-desc" th:text="${item.description != null ? item.description : 'No additional public description provided.'}">
+                        Description
+                    </p>
+                </div>
+
+                <div class="card-footer-row">
+                    <span th:if="${item.color != null and !item.color.isEmpty()}" style="font-size: 0.8rem; color: #64748b;">
+                        Color: <span th:text="${item.color}">Color</span>
+                    </span>
+                    <a th:href="@{/items/{id}(id=${item.id})}" class="btn btn-navy btn-sm">View Details &rarr;</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<div th:replace="~{fragments/footer :: footer}"></div>
+
+</body>
+</html>
